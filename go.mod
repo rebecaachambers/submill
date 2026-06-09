@@ -1,4 +1,4 @@
-﻿module github.com/rebecaachambers/submill
+module github.com/rebecaachambers/submill
 
 go 1.25.0
 
