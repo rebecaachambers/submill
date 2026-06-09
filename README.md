@@ -94,10 +94,57 @@ systemctl status submill   # 状态
 journalctl -u submill -f   # 实时日志
 ```
 
+
+### Docker 安装
+
+```bash
+# 构建镜像
+docker build -t submill .
+
+# 运行容器
+docker run -d --name submill --restart=always \
+  -p 7890:7890 \
+  -p 8199:8199 \
+  -v submill-config:/app/config \
+  -v submill-output:/app/output \
+  submill
+
+# 查看日志
+docker logs -f submill
+
+# 停止/启动
+docker stop submill
+docker start submill
+```
+
+### Docker Compose 安装（推荐）
+
+```bash
+# 拉取项目
+git clone https://github.com/rebecaachambers/submill.git
+cd submill
+
+# 构建并启动
+docker compose up -d
+
+# 查看日志
+docker compose logs -f
+
+# 停止
+docker compose down
+```
+
+
+| 参数 | 说明 |
+|---|---|
+| `-p 7890:7890` | Mihomo HTTP/SOCKS5 代理端口 |
+| `-p 8199:8199` | SubMill Web 面板 |
+| `-v submill-config:/app/config` | 持久化配置文件 (`submill.yaml` + `config.yaml`) |
+| `-v submill-output:/app/output` | 持久化节点输出文件 (`all.yaml`) |
+
+> **注意**：首次运行后编辑 `submill-config` volume 中的 `submill.yaml`，填入 `sub-urls` 订阅地址。
+
 ---
-
-
-
 ## 端口说明
 
 | 服务 | 端口 | 用途 |

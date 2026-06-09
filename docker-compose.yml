@@ -1,0 +1,28 @@
+﻿version: "3.8"
+
+services:
+  submill:
+    build: .
+    image: submill:latest
+    container_name: submill
+    restart: always
+    network_mode: bridge
+    ports:
+      - "7890:7890"   # Mihomo HTTP/SOCKS5 proxy
+      - "8199:8199"   # SubMill Web panel
+    volumes:
+      - submill-config:/app/config
+      - submill-output:/app/output
+    environment:
+      - TZ=Asia/Shanghai
+      - SUBMILL_PROXY=   # Optional: proxy for submill to fetch subscriptions
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8199/sub/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  submill-config:
+  submill-output:

@@ -1,0 +1,53 @@
+﻿# Git
+.git
+.gitignore
+
+# Build artifacts
+submill
+mihomo/mihomo
+build/
+
+# IDE
+.idea
+.vscode
+.claude/
+.qoder/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+install.log
+
+# Temp
+tmp/
+temp/
+
+# Output
+output/
+config/output/
+
+# Go installers (large, not needed in Docker)
+assets/go/
+
+# Vendor tarballs (already extracted as vendor/ dirs)
+assets/vendor.tar.gz
+assets/mihomo-vendor.tar.gz
+
+# Certificate/config cruft from local dev
+cert_conf.json
+combined.pem
+daemon.json
+fix_ssl.py
+gateway_setting.json
+nginx_117.conf
+nginx_conf.txt
+nginx_final.txt
+nginx_latest.txt
+submill.bundle
+
+# Documentation images etc
+*.png
+*.jpg
