@@ -37,18 +37,39 @@
 | 项目 | 最低配置 | 推荐配置 |
 |---|---|---|
 | **操作系统** | Linux (Debian/Ubuntu/CentOS/Alpine) | Debian 12+ / Ubuntu 22.04+ |
-| **架构** | AMD64 / ARM64 | ARM64 (树莓派、软路由) 或 AMD64 |
-| **内存** | 512MB | 1GB+ |
-| **磁盘** | 500MB | 2GB+ (含 Go 编译缓存) |
+| **架构** | AMD64 / ARM64 | ARM64 或 AMD64 |
+| **内存** | 2GB + 1GB swap | 4GB+ |
+| **磁盘** | 1GB | 3GB+ (含 Go 编译缓存 ~500MB) |
 | **网络** | 能访问 GitHub 拉取订阅源 | 带宽 ≥ 10Mbps |
-| **CPU** | 单核 | 双核+ (并发检测 200+ 节点时) |
+| **CPU** | 单核 | 双核+ |
+
+### 实机验证
+
+| 设备 | 内存 | 结果 |
+|---|---|---|
+| LXC 容器 (114) | 512MB | ❌ Go 编译 OOM 被 kill，无法安装 |
+| 软路由 ARM64 (117) | 3.6GB | ✅ 正常运行，217 节点并发 200 稳定 |
 
 ### 注意事项
 
-- **ARM64 设备**（树莓派、Rockchip 软路由等）实测可用，安装脚本自动识别
-- **并发数 `concurrent`**：512MB 内存建议 ≤ 100，1GB 内存可设 200~300
-- **磁盘空间**：项目源码约 50MB，编译后二进制约 30MB，Go 缓存约 200MB
-- **完全离线安装**：项目自带 Go 安装包 (assets/go/) 和 vendor 依赖，无需网络下载编译依赖
+- **编译阶段内存需求大**：`go build` 链接 mihomo 内核需 1~1.5GB，小于 2GB 必须开 swap
+- **运行时内存**：SubMill ~150MB + Mihomo ~50MB + SubStore ~100MB，合计约 300MB
+- **并发数建议**：2GB 内存 ≤ 100，4GB 可设 200~300，8GB 可到 500
+- **ARM64 设备**：安装脚本自动识别架构，实测树莓派/软路由可用
+- **磁盘空间**：项目源码约 50MB，编译产物约 30MB，Go 编译缓存 300~500MB
+- **必须开启 swap**：低于 4GB 内存务必配置至少 1GB swap，否则编译阶段大概率被 OOM kill
+
+```bash
+# 检查 swap
+free -h
+
+# 如果没有 swap，创建 1GB swap 文件
+sudo fallocate -l 1G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
 
 ## 快速安装
 
