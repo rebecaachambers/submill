@@ -1,4 +1,4 @@
-package config
+﻿package config
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// WriteMihomoConfig generates config/mihomo.yaml.
+// WriteMihomoConfig generates config/config.yaml.
 // Mihomo reads SubMill's node output directly via file provider ? no subscription URLs needed.
 func WriteMihomoConfig() error {
 	path := filepath.Join(getExecutableDir(), "config", "config.yaml")

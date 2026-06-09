@@ -1,4 +1,4 @@
-package app
+﻿package app
 
 import (
 	"os"
@@ -7,11 +7,11 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// FileLogger holds subs-check's own slog output. Kept dedicated (no gin
+// FileLogger holds submill's own slog output. Kept dedicated (no gin
 // access logs mixed in) so the web admin /api/logs endpoint can surface
 // a clean view of application events.
 var FileLogger = &lumberjack.Logger{
-	Filename:   filepath.Join(os.TempDir(), "subs-check.log"),
+	Filename:   filepath.Join(os.TempDir(), "submill.log"),
 	MaxSize:    10,
 	MaxBackups: 3,
 	MaxAge:     7,
@@ -22,7 +22,7 @@ var FileLogger = &lumberjack.Logger{
 // so HTTP noise doesn't pollute the admin log viewer (and doesn't
 // interleave with the CLI progress renderer on stdout).
 var GinFileLogger = &lumberjack.Logger{
-	Filename:   filepath.Join(os.TempDir(), "subs-check-gin.log"),
+	Filename:   filepath.Join(os.TempDir(), "submill-gin.log"),
 	MaxSize:    10,
 	MaxBackups: 3,
 	MaxAge:     7,

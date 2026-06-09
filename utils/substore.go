@@ -32,7 +32,7 @@ import (
 //   - args:     参数,*类型随算子而变*(对象 / 字符串 / 数组都可能),所以这里用 any
 //   - disabled: 是否禁用
 //   - customName/id: 前端用的元数据。sub-store 后端处理时只读 type/args/disabled,
-//     customName 仅作前端显示名,故我们借它当"这是 subs-check 的算子"的标记(见 overwriteOpMarker)
+//     customName 仅作前端显示名,故我们借它当"这是 submill 的算子"的标记(见 overwriteOpMarker)
 //
 // 接口要点:
 //   - 创建用 POST /api/subs、/api/files
@@ -114,7 +114,7 @@ const (
 	MihomoName = "mihomo"
 	// 我们覆写算子的识别标记，写在 process item 的 customName 上。
 	// sub-store 处理时只读 type/args/disabled，customName 仅作前端展示，可安全用作标记。
-	overwriteOpMarker = "subs-check专用,勿动"
+	overwriteOpMarker = "submill专用,勿动"
 )
 
 // 用来判断用户是否在运行时更改了覆写订阅的url
@@ -197,7 +197,7 @@ func createSub(data []byte) error {
 	sub := sub{
 		Content: string(data),
 		Name:    "sub",
-		Remark:  "subs-check专用,勿动",
+		Remark:  "submill专用,勿动",
 		Source:  "local",
 		Process: []Operator{
 			{Type: "Quick Setting Operator"},
@@ -278,7 +278,7 @@ func createfile() error {
 				CustomName: overwriteOpMarker,
 			},
 		},
-		Remark:     "subs-check专用,勿动",
+		Remark:     "submill专用,勿动",
 		Source:     "local",
 		SourceName: "sub",
 		SourceType: "subscription",

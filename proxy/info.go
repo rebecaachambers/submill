@@ -191,7 +191,7 @@ func GetMe(httpClient *http.Client) (loc string, ip string) {
 		slog.Debug(fmt.Sprintf("创建请求失败: %s", err))
 		return
 	}
-	req.Header.Set("User-Agent", "subs-check (https://github.com/rebecaachambers/submill)")
+	req.Header.Set("User-Agent", "submill (https://github.com/rebecaachambers/submill)")
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		slog.Debug(fmt.Sprintf("me获取节点位置失败: %s", err))
@@ -234,7 +234,7 @@ func GetIpinfo(httpClient *http.Client) (loc string, ip string) {
 		slog.Debug(fmt.Sprintf("创建请求失败: %s", err))
 		return
 	}
-	req.Header.Set("User-Agent", "subs-check (https://github.com/rebecaachambers/submill)")
+	req.Header.Set("User-Agent", "submill (https://github.com/rebecaachambers/submill)")
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		slog.Debug(fmt.Sprintf("Ipinfo获取节点位置失败: %s", err))

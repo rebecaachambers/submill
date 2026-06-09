@@ -35,7 +35,7 @@ func init() {
 		TimeFormat: "2006-01-02 15:04:05",
 	})
 
-	// 2. 文件输出 - 不带颜色; 写 app.FileLogger ($TMP/subs-check.log),供 web UI 读取
+	// 2. 文件输出 - 不带颜色; 写 app.FileLogger ($TMP/submill.log),供 web UI 读取
 	fileHandler := tint.NewHandler(app.FileLogger, &tint.Options{
 		Level:      logLevel,
 		TimeFormat: "2006-01-02 15:04:05",
