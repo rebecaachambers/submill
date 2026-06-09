@@ -12,39 +12,55 @@ jobs:
       - name: Check subs-check latest release
         id: subs
         run: |
-          LATEST=$(curl -s https://api.github.com/repos/beck-8/subs-check/releases/latest | jq -r .tag_name)
-          echo "subs_latest=${LATEST}" >> $GITHUB_OUTPUT
-          echo "subs-check latest: $LATEST"
+          RELEASE=$(curl -s https://api.github.com/repos/beck-8/subs-check/releases/latest)
+          TAG=$(echo "$RELEASE" | jq -r .tag_name)
+          BODY=$(echo "$RELEASE" | jq -r .body)
+          PUBLISHED=$(echo "$RELEASE" | jq -r .published_at)
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "published=${PUBLISHED}" >> $GITHUB_OUTPUT
 
       - name: Check Mihomo latest version
         id: mihomo
         run: |
           LATEST=$(curl -s https://proxy.golang.org/github.com/metacubex/mihomo/@latest | jq -r .Version)
-          echo "mihomo_latest=${LATEST}" >> $GITHUB_OUTPUT
-          echo "mihomo latest: $LATEST"
+          echo "version=${LATEST}" >> $GITHUB_OUTPUT
 
       - name: Create notification issue
         uses: actions/github-script@v7
         with:
           script: |
-            const subsLatest = "${{ steps.subs.outputs.subs_latest }}";
-            const mihomoLatest = "${{ steps.mihomo.outputs.mihomo_latest }}";
+            const subsTag = "${{ steps.subs.outputs.tag }}";
+            const subsBody = `${{ steps.subs.outputs.body }}`;
+            const subsPublished = "${{ steps.subs.outputs.published }}";
+            const mihomoVersion = "${{ steps.mihomo.outputs.version }}";
 
             const body = [
               "## 上游更新检测 (Monthly)",
               "",
-              `| 项目 | 最新版本 |`,
-              `|---|---|`,
-              `| [subs-check](https://github.com/beck-8/subs-check) | ${subsLatest} |`,
-              `| [Mihomo](https://github.com/MetaCubeX/mihomo) | ${mihomoLatest} |`,
+              "### [subs-check](https://github.com/beck-8/subs-check)",
+              `**版本**: ${subsTag}`,
+              `**发布日期**: ${subsPublished}`,
               "",
-              "> 此 Issue 仅作通知，不会自动更新代码。需要升级时请手动操作。",
+              "**更新内容**:",
+              subsBody || "(未获取到更新说明)",
+              "",
+              "---",
+              "",
+              "### [Mihomo](https://github.com/MetaCubeX/mihomo)",
+              `**版本**: ${mihomoVersion}`,
+              "",
+              `Changelog: https://github.com/MetaCubeX/mihomo/releases/tag/${mihomoVersion}`,
+              "",
+              "> 此 Issue 仅作通知，不会自动更新。需要升级时请 @rebecaachambers",
             ].join("\n");
 
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `上游更新: subs-check ${subsLatest} / Mihomo ${mihomoLatest}`,
+              title: `[Upstream] subs-check ${subsTag} / Mihomo ${mihomoVersion}`,
               body: body,
               labels: ["upstream"],
             });
