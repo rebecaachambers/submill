@@ -1,4 +1,4 @@
-package app
+﻿package app
 
 import (
 	"flag"
@@ -10,12 +10,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/beck-8/subs-check/app/monitor"
-	"github.com/beck-8/subs-check/assets"
-	"github.com/beck-8/subs-check/check"
-	"github.com/beck-8/subs-check/config"
-	"github.com/beck-8/subs-check/save"
-	"github.com/beck-8/subs-check/utils"
+	"github.com/rebecaachambers/submill/app/monitor"
+	"github.com/rebecaachambers/submill/assets"
+	"github.com/rebecaachambers/submill/config"
+	"github.com/rebecaachambers/submill/check"
+	"github.com/rebecaachambers/submill/save"
+	"github.com/rebecaachambers/submill/utils"
 	"github.com/fsnotify/fsnotify"
 	"github.com/robfig/cron/v3"
 )
@@ -61,6 +61,11 @@ func (app *App) Initialize() error {
 	// 初始化 DNS resolver（必须在任何 proxy 连接之前，影响 mihomo 全局 resolver）
 	if err := initResolver(); err != nil {
 		return fmt.Errorf("初始化 DNS 失败: %w", err)
+	}
+
+	// Auto-generate Mihomo config from SubMill settings
+	if err := config.WriteMihomoConfig(); err != nil {
+		slog.Warn(fmt.Sprintf("Failed to write Mihomo config: %v", err))
 	}
 
 	// 初始化配置文件监听

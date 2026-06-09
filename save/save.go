@@ -1,4 +1,4 @@
-package save
+﻿package save
 
 import (
 	"fmt"
@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/beck-8/subs-check/check"
-	"github.com/beck-8/subs-check/config"
-	"github.com/beck-8/subs-check/save/method"
-	"github.com/beck-8/subs-check/utils"
+	"github.com/rebecaachambers/submill/check"
+	"github.com/rebecaachambers/submill/config"
+	"github.com/rebecaachambers/submill/save/method"
+	"github.com/rebecaachambers/submill/utils"
 	"gopkg.in/yaml.v3"
 )
 

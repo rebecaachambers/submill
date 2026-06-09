@@ -1,11 +1,11 @@
+﻿mihomo/vendor/
+vendor/
 openipdb.ipdb
 config.yaml
-mihomo.yaml
 test
 
 output/*
-subs-check*
-mihomo-check*
+submill*
 
 .idea
 .vscode
@@ -13,3 +13,15 @@ mihomo-check*
 .qoder/
 
 .DS_Store
+
+# mihomo binary (compiled into mihomo/), not the config
+mihomo/mihomo
+!config/mihomo.yaml
+
+
+# cross-compile output
+build/
+
+# Go installers (bundled for offline setup)
+# Go installers are distributed via GitHub Releases, not committed to repo
+assets/go/

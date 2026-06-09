@@ -1,4 +1,4 @@
-package utils
+﻿package utils
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 
 	"log/slog"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 )
 
 // 定义通用的 HTTP 客户端接口

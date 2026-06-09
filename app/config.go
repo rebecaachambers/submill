@@ -1,4 +1,4 @@
-package app
+﻿package app
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/beck-8/subs-check/config"
-	"github.com/beck-8/subs-check/utils"
+	"github.com/rebecaachambers/submill/config"
+	"github.com/rebecaachambers/submill/utils"
 	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 )
@@ -23,7 +23,7 @@ func (app *App) initConfigPath() error {
 			return fmt.Errorf("创建配置目录失败: %w", err)
 		}
 
-		app.configPath = filepath.Join(configDir, "config.yaml")
+		app.configPath = filepath.Join(configDir, "submill.yaml")
 	}
 	return nil
 }

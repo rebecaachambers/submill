@@ -1,11 +1,11 @@
-package main
+﻿package main
 
 import (
 	"fmt"
 	"log/slog"
 	"os"
 
-	"github.com/beck-8/subs-check/app"
+	"github.com/rebecaachambers/submill/app"
 )
 
 func main() {

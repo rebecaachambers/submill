@@ -1,4 +1,4 @@
-package method
+﻿package method
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 
 	"log/slog"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 )
 
 const (

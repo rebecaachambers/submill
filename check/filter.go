@@ -1,11 +1,11 @@
-package check
+﻿package check
 
 import (
 	"fmt"
 	"log/slog"
 	"regexp"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 )
 
 // CompileFilterPatterns compiles the configured filter regex list.

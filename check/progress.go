@@ -1,4 +1,4 @@
-package check
+﻿package check
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 	"github.com/mattn/go-isatty"
 )
 

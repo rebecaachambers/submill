@@ -7,5 +7,5 @@ import (
 	_ "embed"
 )
 
-// node 不支持 linux 386 架构
+// node ??? linux 386 ??
 var EmbeddedNode []byte

@@ -1,11 +1,11 @@
-package check
+﻿package check
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/beck-8/subs-check/config"
-	proxyutils "github.com/beck-8/subs-check/proxy"
+	"github.com/rebecaachambers/submill/config"
+	proxyutils "github.com/rebecaachambers/submill/proxy"
 )
 
 // RenderName 根据 Result 的结构化字段构造展示名。

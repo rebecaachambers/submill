@@ -1,0 +1,68 @@
+mixed-port: 7890
+bind-address: "*"
+allow-lan: true
+mode: rule
+log-level: info
+ipv6: false
+geo-auto-update: false
+geo-update-interval: 99999
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+proxy-providers:
+  submill:
+    type: file
+    path: output/all.yaml
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - auto
+      - balance
+      - DIRECT
+
+  - name: auto
+    type: url-test
+    use:
+      - submill
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 20
+
+  - name: balance
+    type: load-balance
+    use:
+      - submill
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    strategy: consistent-hashing
+
+  - name: FALLBACK
+    type: fallback
+    proxies:
+      - auto
+      - balance
+      - DIRECT
+
+rules:
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - MATCH,PROXY

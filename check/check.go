@@ -1,4 +1,4 @@
-package check
+﻿package check
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/beck-8/subs-check/check/platform"
-	"github.com/beck-8/subs-check/config"
-	proxyutils "github.com/beck-8/subs-check/proxy"
+	"github.com/rebecaachambers/submill/check/platform"
+	"github.com/rebecaachambers/submill/config"
+	proxyutils "github.com/rebecaachambers/submill/proxy"
 	"github.com/juju/ratelimit"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/constant"

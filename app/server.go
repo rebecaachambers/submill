@@ -1,4 +1,4 @@
-package app
+﻿package app
 
 import (
 	"bytes"
@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beck-8/subs-check/check"
-	"github.com/beck-8/subs-check/config"
-	"github.com/beck-8/subs-check/save/method"
+	"github.com/rebecaachambers/submill/check"
+	"github.com/rebecaachambers/submill/config"
+	"github.com/rebecaachambers/submill/save/method"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v3"

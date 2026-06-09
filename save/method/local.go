@@ -1,4 +1,4 @@
-package method
+﻿package method
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/beck-8/subs-check/config"
-	"github.com/beck-8/subs-check/utils"
+	"github.com/rebecaachambers/submill/config"
+	"github.com/rebecaachambers/submill/utils"
 )
 
 const (

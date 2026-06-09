@@ -1,4 +1,4 @@
-package method
+﻿package method
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"mime"
 	"path/filepath"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )

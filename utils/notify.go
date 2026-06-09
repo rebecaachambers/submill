@@ -1,4 +1,4 @@
-package utils
+﻿package utils
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 )
 
 // NotifyRequest 定义发送通知的请求结构

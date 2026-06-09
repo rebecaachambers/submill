@@ -1,10 +1,10 @@
-package check
+﻿package check
 
 import (
 	"testing"
 
-	"github.com/beck-8/subs-check/check/platform"
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/check/platform"
+	"github.com/rebecaachambers/submill/config"
 )
 
 func TestFilterResults_NoFilter_PassesAll(t *testing.T) {

@@ -1,10 +1,10 @@
-package check
+﻿package check
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/beck-8/subs-check/config"
+	"github.com/rebecaachambers/submill/config"
 )
 
 // makePipelineProxies returns n stub proxies; the numeric index is

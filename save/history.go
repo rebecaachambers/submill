@@ -1,4 +1,4 @@
-package save
+﻿package save
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beck-8/subs-check/config"
-	"github.com/beck-8/subs-check/save/method"
+	"github.com/rebecaachambers/submill/config"
+	"github.com/rebecaachambers/submill/save/method"
 	"gopkg.in/yaml.v3"
 )
 
