@@ -39,7 +39,7 @@
 | **操作系统** | Linux (Debian/Ubuntu/CentOS/Alpine) | Debian 12+ / Ubuntu 22.04+ |
 | **架构** | AMD64 / ARM64 | ARM64 或 AMD64 |
 | **内存** | 2GB + 1GB swap | 4GB+ |
-| **磁盘** | 1GB | 3GB+ (含 Go 编译缓存 ~500MB) |
+| **磁盘** | 2GB | 4GB+ (含 Go 编译缓存 ~500MB) |
 | **网络** | 能访问 GitHub 拉取订阅源 | 带宽 ≥ 10Mbps |
 | **CPU** | 单核 | 双核+ |
 
@@ -48,7 +48,7 @@
 | 设备 | 内存 | 结果 |
 |---|---|---|
 | LXC 容器 (114) | 512MB | ❌ Go 编译 OOM 被 kill，无法安装 |
-| 软路由 ARM64 (117) | 3.6GB | ✅ 正常运行，217 节点并发 200 稳定 |
+| 软路由 ARM64   | 3.6GB | ✅ 正常运行，217 节点并发 200 稳定 |
 
 ### 注意事项
 
@@ -57,14 +57,14 @@
 - **并发数建议**：2GB 内存 ≤ 100，4GB 可设 200~300，8GB 可到 500
 - **ARM64 设备**：安装脚本自动识别架构，实测树莓派/软路由可用
 - **磁盘空间**：项目源码约 50MB，编译产物约 30MB，Go 编译缓存 300~500MB
-- **必须开启 swap**：低于 4GB 内存务必配置至少 1GB swap，否则编译阶段大概率被 OOM kill
+- **必须开启 swap**：低于 4GB 内存务必配置至少 2GB swap，否则编译阶段大概率被 OOM kill
 
 ```bash
 # 检查 swap
 free -h
 
-# 如果没有 swap，创建 1GB swap 文件
-sudo fallocate -l 1G /swapfile
+# 如果没有 swap，创建 4-8GB swap 文件
+sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
@@ -96,43 +96,7 @@ journalctl -u submill -f   # 实时日志
 
 ---
 
-## 使用方法
 
-### 代理端口
-
-SubMill 启动后可通过 Mihomo 代理上网：
-
-```bash
-# HTTP 代理
-curl -x http://127.0.0.1:7890 https://www.google.com
-
-# SOCKS5 代理
-curl --socks5 127.0.0.1:7890 https://www.google.com
-
-# 环境变量
-export HTTP_PROXY=http://127.0.0.1:7890
-export HTTPS_PROXY=http://127.0.0.1:7890
-```
-
-> 如果节点来自 GitHub 等需要代理的地址，可配置 `github-proxy` 加速拉取：
-> ```yaml
-> github-proxy: "https://ghfast.top/"
-> ```
-
-### 限速配置
-
-```yaml
-# 100MB 下载限制
-download-mb: 100
-
-# 1GB 下载限制
-download-mb: 1024
-
-# 不限速
-download-mb: 0
-```
-
----
 
 ## 端口说明
 
@@ -143,142 +107,6 @@ download-mb: 0
 | mihomo | `7890` | HTTP/SOCKS5 代理端口 |
 
 ---
-
-## SubMill + Mihomo 工作原理
-
-```
-SubMill 检测完节点后写入 config/output/all.yaml
-Mihomo 通过文件类型 (type: file) proxy-provider 直接读取，无需 HTTP 传输
-```
-
-Mihomo 配置文件 (`config/config.yaml`) 中的 proxy-provider 配置：
-
-```yaml
-proxy-providers:
-  submill:
-    type: file
-    path: output/all.yaml
-    health-check:
-      enable: true
-      url: http://www.gstatic.com/generate_204
-      interval: 300
-```
-
----
-
-## ⚙️ 推荐配置
-
-以下是经过验证的推荐配置，直接复制使用即可保证最佳效果。**两个配置文件已分离，请勿混淆。**
-
-### SubMill 配置 (`config/submill.yaml`)
-
-```yaml
-# ============ 基础设置 ============
-print-progress: true
-concurrent: 200                    # 并发检测数，根据机器性能调整 (100~500)
-check-interval: 120                # 检测间隔(分钟)，即每2小时更新一次节点
-listen-port: ":8199"               # Web 面板端口
-save-method: "local"               # 保存方式：local 本地存储，无需外部依赖
-
-# ============ 超时 & 测速 ============
-timeout: 5000                      # 节点延迟超时(毫秒)
-alive-test-url: http://www.gstatic.com/generate_204
-speed-test-url: https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/download/v2.21.12/Waifu2x-Extension-GUI-Portable.7z
-min-speed: 512                     # 最低速度(KB/s)，低于此值丢弃
-download-timeout: 10               # 测速最长等待(秒)
-download-mb: 20                    # 单节点测速最大下载量(MB)
-
-# ============ 订阅源 ============
-sub-urls-retry: 3                  # 订阅拉取失败重试次数
-sub-urls-concurrent: 20            # 同时拉取订阅的并发数
-sub-urls-get-ua: "clash.meta"
-
-# 远程订阅清单（自动合并多个来源）
-sub-urls-remote:
-  - https://raw.githubusercontent.com/beck-8/sub-urls/refs/heads/main/%E5%B0%8F%E8%80%8C%E7%BE%8E.txt
-
-# 本地订阅地址（可直接添加自己的机场订阅）
-sub-urls:
-  # - https://your-subscription-url-here
-
-# ============ 输出 & 历史 ============
-keep-days: 0                       # 保留历史节点天数，0=关闭
-rename-node: true                  # 节点重命名（国家+速度标签）
-node-prefix: ""                    # 节点名前缀
-
-# ============ 流媒体检测 (可选) ============
-media-check: false                 # 开启后会消耗更多时间，按需启用
-media-check-timeout: 5
-platforms:
-  - iprisk
-  - youtube
-  - netflix
-  - openai
-```
-
-### Mihomo 配置 (`config/config.yaml`)
-
-以下为 **自动生成** 的配置（由 SubMill 启动时调用 `WriteMihomoConfig()` 写入），仅作参考：
-
-```yaml
-mixed-port: 7890                   # HTTP/SOCKS5 混合端口
-bind-address: "*"                  # 监听所有网卡，允许局域网使用
-allow-lan: true
-mode: rule
-log-level: info
-ipv6: false
-
-# 关闭 GeoIP 自动更新（离线环境必需）
-geo-auto-update: false
-geo-update-interval: 99999
-
-# DNS 使用阿里公共 DNS（无需 GeoIP MMDB）
-dns:
-  enable: true
-  ipv6: false
-  enhanced-mode: fake-ip
-  nameserver:
-    - 223.5.5.5
-    - 119.29.29.29
-
-# 文件类型 provider — 直接读取 SubMill 输出，无需 HTTP
-proxy-providers:
-  submill:
-    type: file
-    path: output/all.yaml
-    health-check:
-      enable: true
-      url: http://www.gstatic.com/generate_204
-      interval: 300
-
-# 代理组：auto=自动测速优选，balance=均衡负载
-proxy-groups:
-  - name: PROXY
-    type: select
-    proxies: [auto, balance, DIRECT]
-
-  - name: auto
-    type: url-test
-    use: [submill]
-    url: http://www.gstatic.com/generate_204
-    interval: 300
-    tolerance: 20
-
-  - name: balance
-    type: load-balance
-    use: [submill]
-    url: http://www.gstatic.com/generate_204
-    interval: 300
-    strategy: consistent-hashing
-
-# 规则：内网直连，其余走代理
-rules:
-  - IP-CIDR,192.168.0.0/16,DIRECT
-  - IP-CIDR,10.0.0.0/8,DIRECT
-  - IP-CIDR,172.16.0.0/12,DIRECT
-  - IP-CIDR,127.0.0.0/8,DIRECT
-  - MATCH,PROXY
-```
 
 ### 关键注意事项
 

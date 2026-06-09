@@ -1,6 +1,4 @@
-﻿mihomo/vendor/
-vendor/
-openipdb.ipdb
+﻿openipdb.ipdb
 config.yaml
 test
 
@@ -25,3 +23,11 @@ build/
 # Go installers (bundled for offline setup)
 # Go installers are distributed via GitHub Releases, not committed to repo
 assets/go/
+
+# vendor dirs excluded (distributed as tarballs)
+vendor/
+mihomo/vendor/
+
+# vendor tarballs included
+!assets/vendor.tar.gz
+!assets/mihomo-vendor.tar.gz

@@ -96,6 +96,21 @@ export HOME="${HOME:-/root}"
 export GOCACHE="${HOME}/.cache/go-build"
 
 # =========================================================================
+# 3.5 Extract vendor tarballs
+# =========================================================================
+log_step "Extracting vendor dependencies..."
+cd "$PROJECT_DIR"
+if [ ! -d "vendor" ]; then
+    log_info "Extracting assets/vendor.tar.gz..."
+    tar -xzf assets/vendor.tar.gz
+fi
+if [ ! -d "mihomo/vendor" ]; then
+    log_info "Extracting assets/mihomo-vendor.tar.gz..."
+    tar -xzf assets/mihomo-vendor.tar.gz
+fi
+log_info "Vendor dependencies ready"
+
+# =========================================================================
 # 4. Compile SubMill
 # =========================================================================
 log_step "Compiling SubMill..."
