@@ -224,7 +224,8 @@ UNITEOF
     sudo_cmd mv /tmp/submill.service /etc/systemd/system/
     sudo_cmd mv /tmp/mihomo.service /etc/systemd/system/
     sudo_cmd systemctl daemon-reload
-    log_info "systemd services registered"
+    sudo_cmd systemctl enable submill mihomo
+    log_info "systemd services registered and enabled"
 else
     log_info "No systemd detected, skipping service registration"
 fi
