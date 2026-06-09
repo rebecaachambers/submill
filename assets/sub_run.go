@@ -117,7 +117,7 @@ func startSubStore() error {
 			fmt.Sprintf("SUB_STORE_BACKEND_API_PORT=%s", hostPort[1]),
 		)
 	} else if len(hostPort) == 1 {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("ok", hostPort[0])) // ??????
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SUB_STORE_PORT_HOST=%s", hostPort[0])) // ??????
 	} else {
 		return fmt.Errorf("sub-store-port invalid port format: %s", config.GlobalConfig.SubStorePort)
 	}
@@ -170,7 +170,7 @@ func startSubStore() error {
 	}
 
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	slog.Info("Sub-store service started", "pid", cmd.Process.Pid, "port", config.GlobalConfig.SubStorePort, "log", logPath)
@@ -218,44 +218,44 @@ func decodeZstd(nodePath, jsPath, overYamlPath string) error {
 	// ??? zstd ?????
 	zstdDecoder, err := zstd.NewReader(nil)
 	if err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	defer zstdDecoder.Close()
 
 	// ??? node ????????
 	nodeFile, err := os.OpenFile(nodePath, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	defer nodeFile.Close()
 
 	zstdDecoder.Reset(bytes.NewReader(EmbeddedNode))
 	if _, err := io.Copy(nodeFile, zstdDecoder); err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	// ??? sub-store ???
 	jsFile, err := os.OpenFile(jsPath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	defer jsFile.Close()
 
 	zstdDecoder.Reset(bytes.NewReader(EmbeddedSubStore))
 	if _, err := io.Copy(jsFile, zstdDecoder); err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	// ??? ??????
 	overYamlFile, err := os.OpenFile(overYamlPath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	defer overYamlFile.Close()
 
 	zstdDecoder.Reset(bytes.NewReader(EmbeddedOverrideYaml))
 	if _, err := io.Copy(overYamlFile, zstdDecoder); err != nil {
-		return fmt.Errorf("ok", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	return nil
 }
@@ -263,7 +263,7 @@ func decodeZstd(nodePath, jsPath, overYamlPath string) error {
 func findProcesses(targetName string) (int32, error) {
 	processes, err := process.Processes()
 	if err != nil {
-		return 0, fmt.Errorf("ok", err)
+		return 0, fmt.Errorf("error: %v", err)
 	}
 
 	for _, p := range processes {
@@ -275,17 +275,17 @@ func findProcesses(targetName string) (int32, error) {
 			return p.Pid, nil
 		}
 	}
-	return 0, fmt.Errorf("ok")
+	return 0, fmt.Errorf("process not found")
 }
 
 func killProcess(pid int32) error {
 	p, err := process.NewProcess(pid)
 	if err != nil {
-		return fmt.Errorf("ok", pid, err)
+		return fmt.Errorf("kill pid %d: %v", pid, err)
 	}
 
 	if err := p.Kill(); err != nil {
-		return fmt.Errorf("ok", pid, err)
+		return fmt.Errorf("kill pid %d: %v", pid, err)
 	}
 	return nil
 }

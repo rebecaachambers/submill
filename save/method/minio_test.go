@@ -1,12 +1,20 @@
 ﻿package method
 
 import (
+	"net"
 	"testing"
+	"time"
 
 	"github.com/rebecaachambers/submill/config"
 )
 
 func TestUploadToS3(t *testing.T) {
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:9000", 2*time.Second)
+	if err != nil {
+		t.Skip("MinIO not available, skipping integration test")
+	}
+	conn.Close()
+
 	config.GlobalConfig.S3Endpoint = "127.0.0.1:9000"
 	config.GlobalConfig.S3AccessID = "123"
 	config.GlobalConfig.S3SecretKey = "123"
