@@ -1,4 +1,4 @@
-﻿//go:build substore_it
+//go:build substore_it
 
 // 真实启动一个临时 sub-store(独立端口 + 独立数据目录),对 substore.go 的增删改查做端到端测试。
 // 默认 go test 不会跑,需要显式带 tag:
