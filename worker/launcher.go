@@ -1,7 +1,6 @@
 ﻿package worker
 
 import (
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
