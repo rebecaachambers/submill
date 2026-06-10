@@ -36,10 +36,7 @@ type App struct {
 }
 
 // projectDir returns the executable's directory.
-func projectDir() string {
-	ex, _ := os.Executable()
-	return utils.GetExecutablePath()
-}
+func projectDir() string { return utils.GetExecutablePath() }
 
 func New(version string) *App {
 	configPath := flag.String("f", "", "config file path")
