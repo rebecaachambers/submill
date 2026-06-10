@@ -27,12 +27,25 @@ jobs:
             tar -xzf assets/mihomo-vendor.tar.gz
           fi
 
-      - name: Build SubMill
-        run: go build -mod=vendor -trimpath -o submill .
+      - name: Build SubMill (Linux)
+        run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o build/submill-linux-amd64 .
 
-      - name: Build Mihomo
+      - name: Build Mihomo (Linux)
         working-directory: mihomo
-        run: go build -mod=vendor -trimpath -o mihomo github.com/metacubex/mihomo
+        run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o ../build/mihomo-linux-amd64 github.com/metacubex/mihomo
+
+      - name: Build SubMill (Windows)
+        run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o build/submill-windows-amd64.exe .
+
+      - name: Build Mihomo (Windows)
+        working-directory: mihomo
+        run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o ../build/mihomo-windows-amd64.exe github.com/metacubex/mihomo
 
       - name: Run tests
         run: go test -mod=vendor -v -count=1 ./...
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: submill-binaries
+          path: build/
