@@ -121,7 +121,9 @@ func (app *App) Run() {
 	go func() {
 		app.nodeWorker.WaitFirstSync()
 		time.Sleep(1 * time.Second)
-		app.mihomo.StartOnce()
+		if app.mihomo.StartOnce() {
+			app.onMihomoReady()
+		}
 	}()
 
 	for range app.checkChan {
