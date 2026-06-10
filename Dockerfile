@@ -39,7 +39,7 @@ RUN cd mihomo && CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -
 # --- Stage 2: Runtime -----------------------------------------------
 FROM alpine:3.21
 
-RUN apk add --no-cache ca-certificates tzdata curl
+RUN apk add --no-cache ca-certificates tzdata curl inotify-tools python3 py3-yaml
 
 ENV TZ=Asia/Shanghai
 
@@ -55,6 +55,8 @@ RUN mkdir -p /app/config /app/output
 COPY --from=builder /src/config/config.example.yaml /app/config/config.example.yaml
 
 # Entrypoint
+COPY scripts/watch-submill scripts/sync-mihomo-nodes /app/scripts/
+RUN chmod +x /app/scripts/watch-submill /app/scripts/sync-mihomo-nodes
 COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 

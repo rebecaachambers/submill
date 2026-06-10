@@ -1,5 +1,5 @@
 ﻿#!/bin/sh
-# SubMill Docker Entrypoint - starts both submill and mihomo
+# SubMill Docker Entrypoint - starts submill + worker + mihomo
 
 set -e
 
@@ -8,7 +8,7 @@ echo "  SubMill Docker Container Starting..."
 echo "============================================"
 
 # Ensure necessary directories
-mkdir -p /app/config /app/output
+mkdir -p /app/config /app/output /app/mihomo/nodes
 
 # Generate default configs if missing
 if [ ! -f /app/config/submill.yaml ]; then
@@ -44,7 +44,7 @@ dns:
 proxy-providers:
   submill:
     type: file
-    path: /app/output/all.yaml
+    path: /app/mihomo/nodes/all.yaml
     health-check:
       enable: true
       url: "http://www.gstatic.com/generate_204"
@@ -100,8 +100,9 @@ fi
 cleanup() {
     echo ""
     echo ">>> Shutting down..."
-    [ -n "$SUBS_PID" ] && kill "$SUBS_PID" 2>/dev/null
+    [ -n "$WORKER_PID" ] && kill "$WORKER_PID" 2>/dev/null
     [ -n "$MIHOMO_PID" ] && kill "$MIHOMO_PID" 2>/dev/null
+    [ -n "$SUBS_PID" ] && kill "$SUBS_PID" 2>/dev/null
     wait
     echo ">>> All services stopped."
 }
@@ -126,6 +127,18 @@ for i in $(seq 1 30); do
     sleep 2
 done
 
+# Start Worker
+echo ">>> Starting Worker (watch + sync)..."
+SUBS_OUTPUT="/app/output/all.yaml" \
+    MIHOMO_NODES="/app/mihomo/nodes" \
+    SYNC_SCRIPT="/app/scripts/sync-mihomo-nodes" \
+    /app/scripts/watch-submill &
+WORKER_PID=$!
+echo ">>> Worker started (PID=$WORKER_PID)"
+
+# Give worker a moment to do initial sync
+sleep 2
+
 # Start Mihomo
 echo ">>> Starting Mihomo..."
 /app/mihomo -d /app/config &
@@ -134,8 +147,9 @@ MIHOMO_PID=$!
 echo ""
 echo "============================================"
 echo "  SubMill Docker - All services running"
-echo "  SubMill: PID=$SUBS_PID   http://127.0.0.1:8199"
-echo "  Mihomo:  PID=$MIHOMO_PID  mixed-port=7890"
+echo "  SubMill : PID=$SUBS_PID    http://127.0.0.1:8199"
+echo "  Worker  : PID=$WORKER_PID  output/ -> mihomo/nodes/"
+echo "  Mihomo  : PID=$MIHOMO_PID  mixed-port=7890"
 echo "============================================"
 
 # Keep container alive

@@ -1,5 +1,5 @@
 ﻿#!/bin/bash
-# SubMill + Mihomo - Fully Offline Installer (Linux ARM64/AMD64)
+# SubMill + Mihomo + Worker - Fully Offline Installer (Linux ARM64/AMD64)
 # Usage: bash scripts/setup.sh
 set -e
 
@@ -17,7 +17,7 @@ GO_VERSION="1.25.0"
 
 # Start log
 echo "============================================" | tee "$LOG_FILE"
-echo "  SubMill + Mihomo Install Log" | tee -a "$LOG_FILE"
+echo "  SubMill + Mihomo + Worker Install Log" | tee -a "$LOG_FILE"
 echo "  Time: $(date)" | tee -a "$LOG_FILE"
 echo "============================================" | tee -a "$LOG_FILE"
 
@@ -45,19 +45,24 @@ esac
 log_info "System: $OS_ID  Arch: $ARCH"
 
 # =========================================================================
-# 2. System dependencies
+# 2. System dependencies (including inotify-tools for worker)
 # =========================================================================
 log_step "Checking system dependencies..."
-for cmd in tar curl; do
+for cmd in tar curl inotifywait; do
     if ! command -v $cmd &>/dev/null; then
-        log_warn "Missing $cmd, installing..."
+        pkg=""
+        case "$cmd" in
+            inotifywait) pkg="inotify-tools" ;;
+            *) pkg="$cmd" ;;
+        esac
+        log_warn "Missing $cmd, installing $pkg..."
         case "$OS_ID" in
             ubuntu|debian|raspbian)
-                sudo_cmd apt-get update -qq && sudo_cmd apt-get install -y -qq $cmd ;;
+                sudo_cmd apt-get update -qq && sudo_cmd apt-get install -y -qq $pkg ;;
             centos|rhel|fedora|rocky|almalinux)
-                sudo_cmd dnf install -y $cmd 2>/dev/null || sudo_cmd yum install -y $cmd ;;
-            alpine) sudo_cmd apk add --no-cache $cmd ;;
-            arch|manjaro) sudo_cmd pacman -S --noconfirm $cmd ;;
+                sudo_cmd dnf install -y $pkg 2>/dev/null || sudo_cmd yum install -y $pkg ;;
+            alpine) sudo_cmd apk add --no-cache $pkg ;;
+            arch|manjaro) sudo_cmd pacman -S --noconfirm $pkg ;;
         esac
     fi
 done
@@ -176,16 +181,40 @@ else
     log_info "Mihomo config: config/config.yaml exists, skipping"
 fi
 
-mkdir -p config/output
-ln -sf config/output output 2>/dev/null || true
-log_info "output/ directory ready (inside config/ for mihomo safe-path)"
+# Create directories for SubMill output and Mihomo nodes
+mkdir -p "$PROJECT_DIR/output"
+mkdir -p "$PROJECT_DIR/mihomo/nodes"
+log_info "output/ and mihomo/nodes/ directories ready"
+
+# Update mihomo config to read from worker's output path
+sed -i 's|path: nodes/all.yaml|path: '$PROJECT_DIR'/mihomo/nodes/all.yaml|' "$PROJECT_DIR/config/config.yaml" 2>/dev/null || true
+log_info "Mihomo config updated to read from mihomo/nodes/"
 
 # =========================================================================
-# 7. Register systemd services (Linux only)
+# 7. Install Worker scripts
+# =========================================================================
+log_step "Installing Worker scripts..."
+
+# Make scripts executable
+chmod +x "$PROJECT_DIR/scripts/watch-submill"
+chmod +x "$PROJECT_DIR/scripts/sync-mihomo-nodes"
+
+# Write worker config with project-specific paths
+cat > /tmp/watch-submill.env << ENVEOF
+SUBS_OUTPUT=$PROJECT_DIR/output/all.yaml
+MIHOMO_NODES=$PROJECT_DIR/mihomo/nodes
+SYNC_SCRIPT=$PROJECT_DIR/scripts/sync-mihomo-nodes
+ENVEOF
+
+log_info "Worker scripts installed and configured"
+
+# =========================================================================
+# 8. Register systemd services (Linux only)
 # =========================================================================
 if command -v systemctl &>/dev/null; then
-    log_step "Registering systemd services..."
+    log_step "Registering systemd services (3 services)..."
 
+    # SubMill service
     cat > /tmp/submill.service << UNITEOF
 [Unit]
 Description=SubMill - Proxy Node Checker
@@ -203,11 +232,32 @@ RestartSec=10
 WantedBy=multi-user.target
 UNITEOF
 
+    # Worker service (runs between SubMill and Mihomo)
+    cat > /tmp/watch-submill.service << UNITEOF
+[Unit]
+Description=SubMill Worker - Watch nodes and sync to Mihomo
+After=submill.service
+Requires=submill.service
+Before=mihomo.service
+
+[Service]
+Type=simple
+EnvironmentFile=-/tmp/watch-submill.env
+ExecStart=${PROJECT_DIR}/scripts/watch-submill
+WorkingDirectory=${PROJECT_DIR}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+UNITEOF
+
+    # Mihomo service
     cat > /tmp/mihomo.service << UNITEOF
 [Unit]
 Description=Mihomo - Proxy Core
-After=submill.service
-Requires=submill.service
+After=watch-submill.service
+Requires=watch-submill.service
 
 [Service]
 Type=simple
@@ -222,10 +272,11 @@ WantedBy=multi-user.target
 UNITEOF
 
     sudo_cmd mv /tmp/submill.service /etc/systemd/system/
+    sudo_cmd mv /tmp/watch-submill.service /etc/systemd/system/
     sudo_cmd mv /tmp/mihomo.service /etc/systemd/system/
     sudo_cmd systemctl daemon-reload
-    sudo_cmd systemctl enable submill mihomo
-    log_info "systemd services registered and enabled"
+    sudo_cmd systemctl enable submill watch-submill mihomo
+    log_info "3 systemd services registered and enabled: submill -> watch-submill -> mihomo"
 else
     log_info "No systemd detected, skipping service registration"
 fi
@@ -237,11 +288,15 @@ echo "" | tee -a "$LOG_FILE"
 echo "============================================" | tee -a "$LOG_FILE"
 echo "  INSTALLATION COMPLETE" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
-echo "  Start:   systemctl start submill mihomo" | tee -a "$LOG_FILE"
-echo "  Enable:  systemctl enable submill mihomo" | tee -a "$LOG_FILE"
-echo "  Status:  systemctl status submill mihomo" | tee -a "$LOG_FILE"
-echo "  Logs:    journalctl -u submill -f" | tee -a "$LOG_FILE"
+echo "  Start:   systemctl start submill watch-submill mihomo" | tee -a "$LOG_FILE"
+echo "  Status:  systemctl status submill watch-submill mihomo" | tee -a "$LOG_FILE"
+echo "  Logs:" | tee -a "$LOG_FILE"
+echo "    journalctl -u submill -f" | tee -a "$LOG_FILE"
+echo "    journalctl -u watch-submill -f" | tee -a "$LOG_FILE"
+echo "    journalctl -u mihomo -f" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
+echo "  Services (startup order):" | tee -a "$LOG_FILE"
+echo "    submill (8199) -> worker -> mihomo (7890)" | tee -a "$LOG_FILE"
 echo "  Mihomo proxy port: 7890 (HTTP/SOCKS5)" | tee -a "$LOG_FILE"
 echo "  SubMill web panel: http://localhost:8199/admin" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
