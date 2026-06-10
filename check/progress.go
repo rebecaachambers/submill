@@ -24,7 +24,7 @@ var ttyReady = func() bool {
 
 // showProgress drives the progress UI until done is signalled.
 // Chooses between three-line in-place ANSI rendering (tty) and
-// periodic info logs (non-tty — pipes, docker logs, redirected files).
+// periodic info logs (non-tty  pipes, docker logs, redirected files).
 func (pc *ProxyChecker) showProgress(done chan bool) {
 	if ttyReady {
 		pc.showProgressANSI(done)
@@ -34,7 +34,7 @@ func (pc *ProxyChecker) showProgress(done chan bool) {
 }
 
 // showProgressANSI renders stacked progress lines (alive / media[ / speed]),
-// updating in place. The third line is omitted when speed testing is off —
+// updating in place. The third line is omitted when speed testing is off 
 // in that mode the media stage already produces the final output, so any
 // third line would just duplicate the filter-pass count.
 func (pc *ProxyChecker) showProgressANSI(done chan bool) {
@@ -48,8 +48,6 @@ func (pc *ProxyChecker) showProgressANSI(done chan bool) {
 		select {
 		case <-done:
 			if progressRendered.Load() {
-				// render loop owns the last newline slot; emit one so any
-				// subsequent log line starts on a clean row
 				fmt.Println()
 				progressRendered.Store(false)
 			}
@@ -92,9 +90,8 @@ func (pc *ProxyChecker) showProgressLog(done chan bool) {
 	}
 }
 
-// renderFrame writes the progress lines and returns how many were printed
-// (2 without speed test, 3 with). Each line is prefixed by \x1b[2K (erase
-// line) so varying-width numbers don't leave stale chars.
+// renderFrame writes the progress lines, returns how many were printed,
+// and notifies ProgressCallback if set.
 func (pc *ProxyChecker) renderFrame() int {
 	hasSpeed := config.GlobalConfig.SpeedTestUrl != ""
 	limit := config.GlobalConfig.SuccessLimit
@@ -105,9 +102,13 @@ func (pc *ProxyChecker) renderFrame() int {
 	mediaDone := MediaDone.Load()
 	filterPass := FilterPassed.Load()
 
+	// Notify platform callback (e.g. Windows progress bar)
+	if ProgressCallback != nil {
+		phase, pct, status := pc.computeCallback(hasSpeed, aliveTotal, aliveDone, aliveOk, mediaDone, filterPass)
+		ProgressCallback(phase, pct, status)
+	}
+
 	if !hasSpeed {
-		// Media is the last stage; its filter-pass count is the final result
-		// so the limit marker also lives on this line.
 		limitHit := limit > 0 && int32(filterPass) >= limit
 		fmt.Printf("\x1b[2K\r%s\n", formatStageLine("测活", aliveDone, aliveTotal, "存活", aliveOk, false))
 		fmt.Printf("\x1b[2K\r%s\n", formatStageLine("媒体", mediaDone, aliveOk, "通过", filterPass, limitHit))
@@ -123,9 +124,54 @@ func (pc *ProxyChecker) renderFrame() int {
 	return 3
 }
 
+// computeCallback derives phase, percent, and status for ProgressCallback.
+func (pc *ProxyChecker) computeCallback(hasSpeed bool, aliveTotal, aliveDone, aliveOk, mediaDone, filterPass uint32) (phase string, pct int, status string) {
+	speedDone := SpeedDone.Load()
+	speedOk := SpeedOk.Load()
+
+	// Determine which phase is active
+	if aliveTotal > 0 && aliveDone < aliveTotal {
+		phase = "alive"
+		if hasSpeed {
+			pct = int(float64(aliveDone) / float64(aliveTotal) * 33)
+		} else {
+			pct = int(float64(aliveDone) / float64(aliveTotal) * 50)
+		}
+	} else if aliveOk > 0 && mediaDone < aliveOk {
+		phase = "media"
+		if hasSpeed {
+			pct = 33 + int(float64(mediaDone)/float64(aliveOk)*33)
+		} else {
+			pct = 50 + int(float64(mediaDone)/float64(aliveOk)*50)
+		}
+	} else if hasSpeed && filterPass > 0 {
+		phase = "speed"
+		pct = 66 + int(float64(speedDone)/float64(filterPass)*34)
+	} else {
+		phase = "done"
+		pct = 100
+	}
+	if pct > 100 {
+		pct = 100
+	}
+	if pct < 0 {
+		pct = 0
+	}
+
+	// Build status text
+	if hasSpeed {
+		status = fmt.Sprintf("测活 %d/%d 存活:%d | 媒体 %d/%d 通过:%d | 测速 通过:%d",
+			aliveDone, aliveTotal, aliveOk, mediaDone, aliveOk, filterPass, speedOk)
+	} else {
+		status = fmt.Sprintf("测活 %d/%d 存活:%d | 媒体 %d/%d 通过:%d",
+			aliveDone, aliveTotal, aliveOk, mediaDone, aliveOk, filterPass)
+	}
+	return
+}
+
 // formatStageLine renders one progress row:
 //
-//	[name] [bar] pct%  done/total  label: pass [✓]
+//	[name] [bar] pct%  done/total  label: pass []
 //
 // Widths are fixed so numbers wiggling between 1-4 digits don't shift columns.
 func formatStageLine(name string, done, total uint32, passLabel string, pass uint32, limitHit bool) string {
@@ -146,7 +192,7 @@ func formatStageLine(name string, done, total uint32, passLabel string, pass uin
 
 	mark := ""
 	if limitHit {
-		mark = " ✓"
+		mark = " \u2713"
 	}
 	return fmt.Sprintf("[%s] [%s] %5.1f%% %6d/%-6d %s: %d%s",
 		name, bar, percent, done, total, passLabel, pass, mark)
@@ -164,12 +210,12 @@ func (pc *ProxyChecker) formatPipelineOneLine() string {
 	speedOk := SpeedOk.Load()
 
 	if hasSpeed {
-		return fmt.Sprintf("流水线: 测活 %d/%d (存活:%d) | 媒体 %d/%d (通过:%d) | 测速 通过:%d",
+		return fmt.Sprintf("流水线 测活 %d/%d (存活:%d) | 媒体 %d/%d (通过:%d) | 测速 通过:%d",
 			aliveDone, aliveTotal, aliveOk,
 			mediaDone, aliveOk, filterPass,
 			speedOk)
 	}
-	return fmt.Sprintf("流水线: 测活 %d/%d (存活:%d) | 媒体 %d/%d (通过:%d)",
+	return fmt.Sprintf("流水线 测活 %d/%d (存活:%d) | 媒体 %d/%d (通过:%d)",
 		aliveDone, aliveTotal, aliveOk,
 		mediaDone, aliveOk, filterPass)
 }

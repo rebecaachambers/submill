@@ -1,4 +1,4 @@
-﻿package app
+package app
 
 import (
 	"flag"
@@ -126,8 +126,15 @@ func (app *App) Run() {
 		}
 	}()
 
-	for range app.checkChan {
-		go app.triggerCheck()
+	trayQuit := worker.WaitTrayQuit()
+	for {
+		select {
+		case <-app.checkChan:
+			go app.triggerCheck()
+		case <-trayQuit:
+			slog.Info("User requested exit via tray icon")
+			return
+		}
 	}
 }
 
@@ -214,7 +221,9 @@ func (app *App) checkProxies() error {
 			config.GlobalProxies = append(config.GlobalProxies, hp...)
 		}
 	}
+	app.beforeCheck()
 	results, err := check.Check()
+	app.afterCheck()
 	if err != nil {
 		return fmt.Errorf("proxy check failed: %w", err)
 	}
