@@ -199,7 +199,7 @@ func (t *Tray) wndProc(hwnd uintptr, msg uint32, wparam, lparam uintptr) uintptr
 	case WM_TRAYICON:
 		switch lparam {
 		case WM_RBUTTONUP:
-			t.showContextMenu()
+			procPostQuitMessage.Call(0) // right-click: exit directly
 		case WM_LBUTTONDBLCLK:
 			// Double-click: show status balloon
 			t.showBalloon("SubMill", t.tooltip)
