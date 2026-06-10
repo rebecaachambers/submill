@@ -15,7 +15,7 @@ func KillResidue() {
 	exe, _ := os.Executable()
 	selfName := filepath.Base(exe)
 
-	targets := []string{"mihomo", "mihomo.exe", "submill", "submill.exe"}
+	targets := []string{"mihomo", "mihomo.exe", "submill", "submill.exe", "node", "node.exe"}
 	for _, name := range targets {
 		if strings.EqualFold(name, selfName) {
 			continue // don't kill self
