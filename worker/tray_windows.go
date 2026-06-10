@@ -10,18 +10,37 @@ import (
 
 // ===== Win32 DLLs =====
 var (
-	shell32 = syscall.NewLazyDLL("shell32.dll")
+	user32   = syscall.NewLazyDLL("user32.dll")
+	kernel32 = syscall.NewLazyDLL("kernel32.dll")
+	shell32  = syscall.NewLazyDLL("shell32.dll")
 
+	// Window management
+	procDefWindowProc   = user32.NewProc("DefWindowProcW")
+	procCreateWindowEx  = user32.NewProc("CreateWindowExW")
+	procShowWindow      = user32.NewProc("ShowWindow")
+	procGetMessage      = user32.NewProc("GetMessageW")
+	procTranslateMsg    = user32.NewProc("TranslateMessage")
+	procDispatchMsg     = user32.NewProc("DispatchMessageW")
+	procDestroyWindow   = user32.NewProc("DestroyWindow")
+	procPostQuitMessage = user32.NewProc("PostQuitMessage")
+	procGetModuleHandle = kernel32.NewProc("GetModuleHandleW")
+	procRegisterClassEx = user32.NewProc("RegisterClassExW")
+
+	// Shell / tray
 	procShellNotifyIcon  = shell32.NewProc("Shell_NotifyIconW")
 	procExtractIconEx    = shell32.NewProc("ExtractIconExW")
 	procDestroyIcon      = user32.NewProc("DestroyIcon")
-	procCreatePopupMenu  = user32.NewProc("CreatePopupMenu")
-	procAppendMenu       = user32.NewProc("AppendMenuW")
-	procTrackPopupMenu   = user32.NewProc("TrackPopupMenu")
-	procDestroyMenu      = user32.NewProc("DestroyMenu")
-	procGetCursorPos     = user32.NewProc("GetCursorPos")
+
+	// Menu
+	procCreatePopupMenu     = user32.NewProc("CreatePopupMenu")
+	procAppendMenu          = user32.NewProc("AppendMenuW")
+	procTrackPopupMenu      = user32.NewProc("TrackPopupMenu")
+	procDestroyMenu         = user32.NewProc("DestroyMenu")
+	procGetCursorPos        = user32.NewProc("GetCursorPos")
 	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
-	procLoadIcon         = user32.NewProc("LoadIconW")
+
+	// Icons
+	procLoadIcon = user32.NewProc("LoadIconW")
 )
 
 const (
@@ -65,6 +84,29 @@ const (
 	IDI_APPLICATION = 32512
 )
 
+type wndClassEx struct {
+	Size       uint32
+	Style      uint32
+	WndProc    uintptr
+	ClsExtra   int32
+	WndExtra   int32
+	Instance   uintptr
+	Icon       uintptr
+	Cursor     uintptr
+	Background uintptr
+	MenuName   *uint16
+	ClassName  *uint16
+	IconSm     uintptr
+}
+
+type msg struct {
+	HWnd    uintptr
+	Message uint32
+	WParam  uintptr
+	LParam  uintptr
+	Time    uint32
+	Pt      struct{ X, Y int32 }
+}
 type point struct {
 	X int32
 	Y int32
