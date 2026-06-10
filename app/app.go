@@ -35,10 +35,15 @@ type App struct {
 	mihomo     *worker.Launcher
 }
 
+// projectDir returns the executable's directory.
+func projectDir() string {
+	ex, _ := os.Executable()
+	return utils.GetExecutablePath()
+}
+
 func New(version string) *App {
 	configPath := flag.String("f", "", "config file path")
 	flag.Parse()
-
 	return &App{
 		configPath: *configPath,
 		checkChan:  make(chan struct{}),
@@ -84,9 +89,9 @@ func (app *App) Initialize() error {
 		time.Sleep(500 * time.Millisecond)
 	}
 	monitor.StartMemoryMonitor()
-	app.nodeWorker = worker.New(utils.GetExecutablePath())
-	app.mihomo = worker.NewLauncher(utils.GetExecutablePath())
-	slog.Info("Worker + Mihomo launcher initialized")
+	app.nodeWorker = worker.New(projectDir())
+	app.mihomo = worker.NewLauncher(projectDir())
+	slog.Info("Worker + Mihomo launcher ready")
 	utils.SetupSignalHandler(check.RequestCancel)
 	return nil
 }
@@ -96,10 +101,12 @@ func (app *App) Run() {
 		app.watcher.Close()
 		if app.ticker != nil { app.ticker.Stop() }
 		if app.cron != nil { app.cron.Stop() }
-		if app.mihomo != nil { app.mihomo.Stop() }
+		app.onShutdown()
 	}()
 
+	app.onStartup()
 	app.setTimer()
+
 	if config.GlobalConfig.CronExpression != "" {
 		slog.Warn("Using cron expression, no immediate check on startup")
 	} else {
@@ -114,7 +121,6 @@ func (app *App) Run() {
 		}
 	}
 
-	// Launch Mihomo once nodes are ready (after first check + worker sync)
 	go func() {
 		app.nodeWorker.WaitFirstSync()
 		time.Sleep(1 * time.Second)
