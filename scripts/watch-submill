@@ -1,33 +1,75 @@
 #!/bin/bash
 # =============================================================================
-# SubMill Worker - 监听 SubMill 输出，转换后同步到 Mihomo
+# SubMill Worker - Watch SubMill output, sync to Mihomo
+# If source file doesn't exist yet (SubMill still checking), poll until it appears
 # =============================================================================
 set -e
 
-# 路径配置：由 setup.sh 安装时替换为实际路径
 SUBS_OUTPUT="${SUBS_OUTPUT:-/opt/submill/output/all.yaml}"
 MIHOMO_NODES="${MIHOMO_NODES:-/opt/submill/mihomo/nodes}"
 SYNC_SCRIPT="${SYNC_SCRIPT:-/opt/submill/scripts/sync-mihomo-nodes}"
 LOCK_FILE="/tmp/watch-submill.lock"
 
-# 防止重复运行
 exec 200>"$LOCK_FILE"
-flock -n 200 || { echo "[WARN] watch-submill 已在运行，退出"; exit 0; }
+flock -n 200 || { echo "[WARN] watch-submill already running, exit"; exit 0; }
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] watch-submill Worker 启动"
-echo "  监听文件: $SUBS_OUTPUT"
-echo "  目标目录: $MIHOMO_NODES"
-echo "  同步脚本: $SYNC_SCRIPT"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] watch-submill Worker started"
+echo "  Source: $SUBS_OUTPUT"
+echo "  Target: $MIHOMO_NODES"
 
-# 首次启动先同步一次
-if [ -f "$SUBS_OUTPUT" ]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 首次同步..."
-    bash "$SYNC_SCRIPT" "$SUBS_OUTPUT" "$MIHOMO_NODES"
+# ---- Phase 1: Wait for source file to appear (SubMill may still be checking) ----
+if [ ! -f "$SUBS_OUTPUT" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for source file to appear..."
+    # Poll every 30s until file exists
+    while [ ! -f "$SUBS_OUTPUT" ]; do
+        # Also try fetching from SubMill HTTP API if available
+        if curl -s --connect-timeout 3 http://127.0.0.1:8199/all.yaml -o "$SUBS_OUTPUT" 2>/dev/null; then
+            if [ -s "$SUBS_OUTPUT" ]; then
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] Pulled nodes from SubMill HTTP API"
+                break
+            fi
+        fi
+        sleep 30
+    done
 fi
 
-# 持续监听
-while inotifywait -q -e close_write,moved_to "$SUBS_OUTPUT" 2>/dev/null; do
-    sleep 1
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 检测到节点文件变化，开始同步..."
-    bash "$SYNC_SCRIPT" "$SUBS_OUTPUT" "$MIHOMO_NODES"
+# ---- Phase 2: Initial sync ----
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Initial sync..."
+bash "$SYNC_SCRIPT" "$SUBS_OUTPUT" "$MIHOMO_NODES" || true
+
+# ---- Phase 3: Watch for changes via inotify ----
+# If inotifywait fails (e.g. parent dir of source removed), fall back to polling
+DIR=$(dirname "$SUBS_OUTPUT")
+FNAME=$(basename "$SUBS_OUTPUT")
+
+if ! inotifywait --help &>/dev/null; then
+    echo "[WARN] inotifywait missing, using 30s polling"
+    POLL_MODE=1
+fi
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Watching for changes..."
+while true; do
+    if [ "${POLL_MODE:-0}" = "1" ]; then
+        # Poll mode
+        sleep 30
+        if [ -f "$SUBS_OUTPUT" ]; then
+            NEW_MTIME=$(stat -c %Y "$SUBS_OUTPUT" 2>/dev/null || echo 0)
+            if [ "$NEW_MTIME" != "${LAST_MTIME:-0}" ]; then
+                LAST_MTIME="$NEW_MTIME"
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] File changed, syncing..."
+                bash "$SYNC_SCRIPT" "$SUBS_OUTPUT" "$MIHOMO_NODES" || true
+            fi
+        fi
+    else
+        # inotify mode
+        if inotifywait -q -e close_write,moved_to "$SUBS_OUTPUT" 2>/dev/null; then
+            sleep 1
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] File changed, syncing..."
+            bash "$SYNC_SCRIPT" "$SUBS_OUTPUT" "$MIHOMO_NODES" || true
+        else
+            # inotifywait failed, switch to poll mode
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] inotify lost, switching to poll mode"
+            POLL_MODE=1
+        fi
+    fi
 done

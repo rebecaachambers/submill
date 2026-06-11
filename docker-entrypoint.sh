@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/sh
 # SubMill Docker Entrypoint - starts submill + worker + mihomo
 
 set -e
