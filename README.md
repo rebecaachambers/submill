@@ -144,27 +144,6 @@ docker compose down
 
 > **注意**：首次运行后编辑 `submill-config` volume 中的 `submill.yaml`，填入 `sub-urls` 订阅地址。
 
----
-
-## 工作流程
-
-```
-SubMill (subs-check)        Worker (watch-submill)        Mihomo
-───────────────             ──────────────                ──────
-config/submill.yaml    ->   inotifywait 监听   ->        mihomo/nodes/all.yaml
-output/all.yaml              检测变化->转换->写入           (读取节点)
-(输出节点)
-
-3 个 systemd 服务，顺序启动:
-  submill (内置Worker) -> mihomo (20171)
-```
-
-| 服务 | 职责 |
-|---|---|
-| **SubMill** | 拉取订阅、检测节点（存活/流媒体/速度），输出到 `output/all.yaml` |
-| **Worker** | 监听 `output/all.yaml` 变化，转换后写入 `mihomo/nodes/all.yaml`，通知 Mihomo 重载 |
-| **Mihomo** | 读取 `mihomo/nodes/all.yaml`，提供 HTTP/SOCKS5 代理（20171），自动测速优选 + 均衡负载 |
-
 ## 端口说明
 
 | 服务 | 端口 | 用途 |
