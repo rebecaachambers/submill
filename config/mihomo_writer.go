@@ -1,4 +1,4 @@
-﻿package config
+package config
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func WriteMihomoConfig() error {
 	path := filepath.Join(getExecutableDir(), "config", "config.yaml")
 
 	cfg := map[string]any{
-		"mixed-port": 7890,
+		"mixed-port": 20171,
 		"bind-address": "*",
 		"allow-lan": true,
 		"mode":       "rule",

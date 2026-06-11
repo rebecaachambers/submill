@@ -1,4 +1,4 @@
-mixed-port: 7890
+mixed-port: 20171
 mode: rule
 log-level: info
 profile:

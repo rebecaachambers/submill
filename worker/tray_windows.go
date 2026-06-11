@@ -54,6 +54,7 @@ const (
 	NIF_ICON    = 0x00000002
 	NIF_TIP     = 0x00000004
 	NIF_STATE   = 0x00000008
+	NIF_INFO    = 0x00000010
 
 	// Custom message
 	WM_TRAYICON = 0x8000 + 1
