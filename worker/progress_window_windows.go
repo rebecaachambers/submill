@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	comctl32 = syscall.NewLazyDLL("comctl32.dll")
 	procInitCommonCtrls2 = comctl32.NewProc("InitCommonControlsEx")
 	procSendMessage      = user32.NewProc("SendMessageW")
 	procSetWindowText    = user32.NewProc("SetWindowTextW")
@@ -22,6 +23,7 @@ var (
 )
 
 const (
+	WS_OVERLAPPED      = 0x00000000
 	WS_CAPTION         = 0x00C00000
 	WS_SYSMENU         = 0x00080000
 	WS_MINIMIZEBOX     = 0x00020000

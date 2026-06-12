@@ -392,8 +392,6 @@ func SetProgressUpdater(_ func(percent int, status string)) {}
 // ClearProgressUpdater is a no-op stub for backward compat.
 func ClearProgressUpdater() {}
 
-// CloseProgress is a no-op stub (no window to close).
-func CloseProgress() {}
 
 // ShowTrayBalloon shows a balloon notification.
 func ShowTrayBalloon(title, text string) {
