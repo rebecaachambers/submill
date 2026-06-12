@@ -17,8 +17,6 @@ func SetProgressUpdater(_ func(percent int, status string)) {}
 // ClearProgressUpdater is a no-op on non-Windows platforms.
 func ClearProgressUpdater() {}
 
-// CloseProgress is a no-op on non-Windows platforms.
-func CloseProgress() {}
 
 // ShowTrayBalloon is a no-op on non-Windows platforms.
 func ShowTrayBalloon(_, _ string) {}
