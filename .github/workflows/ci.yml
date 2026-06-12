@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
         run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o ../build/mihomo-linux-amd64 github.com/metacubex/mihomo
 
       - name: Build SubMill (Windows)
-        run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o build/submill-windows-amd64.exe .
+        run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w -H windowsgui" -o build/submill-windows-amd64.exe .
 
       - name: Build Mihomo (Windows)
         working-directory: mihomo
