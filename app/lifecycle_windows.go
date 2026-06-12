@@ -11,49 +11,46 @@ import (
 )
 
 func (app *App) onStartup() {
-	slog.Info("=== Windows startup: cleaning residue ===")
+	slog.Info("=== Windows startup ===")
 	worker.KillResidue()
-
-	// Clear any stale system proxy from previous crashed session
 	worker.ClearSystemProxy()
-
-	// Start system-tray icon (network-style, right-click → close)
 	worker.InitTray()
 
-	// Wire check progress to progress window + tray tooltip
+	// Show progress window immediately — stays open through entire startup
+	worker.ShowProgress("SubMill - 正在初始化...")
+
+	// Wire progress callback to update bar + status
 	check.ProgressCallback = func(phase string, percent int, status string) {
 		worker.SetProgress(percent, status)
-		worker.UpdateProgress(percent, status)
 	}
 }
 
 func (app *App) beforeCheck() {
-	// Show progress bar window before each check
-	worker.ShowProgress("SubMill - 节点检测中...")
+	worker.SetProgress(0, "正在拉取订阅、检测节点...")
 }
 
 func (app *App) afterCheck() {
-	// Close progress window after check completes
-	worker.CloseProgress()
+	// Don't close the window yet — Mihomo still starting
+	worker.SetProgress(95, "节点检测完成，正在启动 Mihomo...")
 }
 
 func (app *App) onMihomoReady() {
-	// Poll until Mihomo is actually listening on 20171
 	slog.Info("Waiting for Mihomo to be ready...")
-	worker.UpdateTrayTooltip("SubMill - 等待 Mihomo 启动...")
 	for i := 0; i < 60; i++ {
 		if worker.IsPortOpen("127.0.0.1", 20171) {
 			slog.Info("Mihomo is ready, setting proxy")
 			worker.SetSystemProxy()
-			worker.UpdateTrayTooltip("SubMill - 代理已就绪 (127.0.0.1:20171)")
-			// Pop up completion dialog
+			// Close progress, show completion
+			worker.CloseProgress()
 			worker.ShowReadyDialog()
 			return
 		}
 		time.Sleep(1 * time.Second)
 	}
-	slog.Warn("Mihomo did not start within 60s, setting proxy anyway")
+	slog.Warn("Mihomo did not start within 60s")
 	worker.SetSystemProxy()
+	worker.CloseProgress()
+	worker.ShowReadyDialog()
 }
 
 func (app *App) onShutdown() {
@@ -62,8 +59,8 @@ func (app *App) onShutdown() {
 	if app.mihomo != nil {
 		app.mihomo.Stop()
 	}
-	worker.StopTray()
 	worker.CloseProgress()
+	worker.StopTray()
 	worker.KillResidue()
 	worker.CleanFiles(projectDir())
 }
