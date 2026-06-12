@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"syscall"
 	"runtime"
 	"strings"
 	"time"
@@ -113,7 +114,11 @@ func getSelfCommand() *exec.Cmd {
 	}
 	args := os.Args[1:] // 获取参数（不包括程序名）
 	slog.Warn("🔄 进程即将重启...", "path", exePath, "args", args)
-	return exec.Command(exePath, args...)
+		cmd := exec.Command(exePath, args...)
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	}
+	return cmd
 }
 
 // formatBytes 将字节数格式化为人类可读的形式

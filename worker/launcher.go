@@ -1,4 +1,4 @@
-﻿package worker
+package worker
 
 import (
 	"io"
@@ -54,6 +54,11 @@ func (l *Launcher) StartOnce() bool {
 
 	nodesDir := filepath.Join(filepath.Dir(l.binPath), "mihomo", "nodes")
 	os.MkdirAll(nodesDir, 0755)
+
+	// Windows: ensure nodes junction so Mihomo can find nodes within config/
+	if runtime.GOOS == "windows" {
+		EnsureNodesJunction(filepath.Dir(l.binPath))
+	}
 
 	l.cmd = exec.Command(l.binPath, "-d", l.configDir)
 

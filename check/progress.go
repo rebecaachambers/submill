@@ -73,19 +73,36 @@ func (pc *ProxyChecker) showProgressANSI(done chan bool) {
 // non-tty consumers (pipes, docker logs) get visibility into pipeline
 // progress without scroll spam from per-frame writes.
 func (pc *ProxyChecker) showProgressLog(done chan bool) {
-	const interval = 120 * time.Second
-	ticker := time.NewTicker(interval)
+	const frameInterval = 200 * time.Millisecond
+	const logInterval = 120 * time.Second
+	ticker := time.NewTicker(frameInterval)
 	defer ticker.Stop()
 
+	var lastLog time.Time
 	for {
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			if progressPaused.Load() || ProxyCount.Load() == 0 {
-				continue
+			// Always notify GUI progress callback
+			if ProgressCallback != nil {
+				hasSpeed := config.GlobalConfig.SpeedTestUrl != ""
+				aliveTotal := ProxyCount.Load()
+				aliveDone := Progress.Load()
+				aliveOk := Available.Load()
+				mediaDone := MediaDone.Load()
+				filterPass := FilterPassed.Load()
+				if aliveTotal == 0 {
+					ProgressCallback("fetch", 0, "\u6b63\u5728\u62c9\u53d6\u8ba2\u9605...")
+				} else {
+					phase, pct, status := pc.computeCallback(hasSpeed, aliveTotal, aliveDone, aliveOk, mediaDone, filterPass)
+					ProgressCallback(phase, pct, status)
+				}
 			}
-			slog.Info(pc.formatPipelineOneLine())
+			if time.Since(lastLog) > logInterval {
+				slog.Info(pc.formatPipelineOneLine())
+				lastLog = time.Now()
+			}
 		}
 	}
 }

@@ -36,7 +36,7 @@ func WriteMihomoConfig() error {
 		"proxy-providers": map[string]any{
 			"submill": map[string]any{
 				"type": "file",
-				"path": "mihomo/nodes/all.yaml",
+				"path": "./mihomo/nodes/all.yaml",
 				"health-check": map[string]any{
 					"enable":   true,
 					"url":      "http://www.gstatic.com/generate_204",

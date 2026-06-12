@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"syscall"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -29,6 +30,7 @@ func killByName(name string) {
 	switch runtime.GOOS {
 	case "windows":
 		cmd = exec.Command("taskkill", "/F", "/IM", name, "/T")
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	default:
 		cmd = exec.Command("pkill", "-f", name)
 	}

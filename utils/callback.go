@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"syscall"
 	"strings"
 
 	"github.com/rebecaachambers/submill/config"
@@ -75,6 +76,7 @@ func ExecuteCallback(successCount int) {
 		}
 		// 设置工作目录为脚本所在目录
 		cmd.Dir = filepath.Dir(callbackScript)
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	} else {
 		// Unix/Linux/MacOS 系统
 		cmd = exec.Command(callbackScript)

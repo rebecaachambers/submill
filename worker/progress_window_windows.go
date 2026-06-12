@@ -32,8 +32,8 @@ const (
 	WS_CHILD           = 0x40000000
 	CW_USEDEFAULT      = 0x80000000
 	COLOR_WINDOW       = 5
-	PBM_SETPOS         = 0x0402 + 2
-	PBM_SETRANGE32     = 0x0402 + 6
+	PBM_SETPOS         = 0x0402
+	PBM_SETRANGE32     = 0x0406
 	ICC_PROGRESS_CLASS = 0x00000020
 	WM_NCLBUTTONDOWN   = 0x00A1
 	WM_SYSCOMMAND      = 0x0112
@@ -135,7 +135,8 @@ func ShowProgress(title string) (done chan struct{}) {
 
 func progressWndProc(hwnd uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	switch msg {
-	case WM_DESTROY, WM_CLOSE:
+	case WM_CLOSE:
+		procDestroyWindow.Call(hwnd)
 		return 0
 	case WM_NCLBUTTONDOWN:
 		// Block title-bar drag to prevent DefWindowProc modal-loop deadlock
@@ -158,10 +159,7 @@ func SetProgress(percent int, status string) {
 		procSendMessage.Call(progressBarHWND, PBM_SETPOS, uintptr(percent), 0)
 	}
 	if statusHWND != 0 {
-		full := status
-		if percent > 0 {
-			full = status + " (" + itoa(percent) + "%)"
-		}
+		full := status + " (" + itoa(percent) + "%)"
 		text, _ := syscall.UTF16PtrFromString(full)
 		procSetWindowText.Call(statusHWND, uintptr(unsafe.Pointer(text)))
 	}
@@ -184,7 +182,8 @@ func CloseProgress() {
 	progressMu.Lock()
 	defer progressMu.Unlock()
 	if progressHWND != 0 {
-		procDestroyWindow.Call(progressHWND)
+		// Send WM_CLOSE to the window thread (cross-thread safe)
+		procSendMessage.Call(progressHWND, WM_CLOSE, 0, 0)
 		progressHWND = 0
 		progressBarHWND = 0
 		statusHWND = 0

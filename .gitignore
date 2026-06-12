@@ -31,3 +31,4 @@ mihomo/vendor/
 # vendor tarballs included
 !assets/vendor.tar.gz
 !assets/mihomo-vendor.tar.gz
+.tmp/
