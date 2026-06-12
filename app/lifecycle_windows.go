@@ -33,9 +33,20 @@ func (app *App) afterCheck() {
 }
 
 func (app *App) onMihomoReady() {
-	time.Sleep(2 * time.Second)
+	// Poll until Mihomo is actually listening on 20171
+	slog.Info("Waiting for Mihomo to be ready...")
+	worker.UpdateTrayTooltip("SubMill - 等待 Mihomo 启动...")
+	for i := 0; i < 60; i++ {
+		if worker.IsPortOpen("127.0.0.1", 20171) {
+			slog.Info("Mihomo is ready, setting proxy")
+			worker.SetSystemProxy()
+			worker.UpdateTrayTooltip("SubMill - 代理已就绪 (127.0.0.1:20171)")
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
+	slog.Warn("Mihomo did not start within 60s, setting proxy anyway")
 	worker.SetSystemProxy()
-	worker.UpdateTrayTooltip("SubMill - 代理已就绪 (127.0.0.1:20171)")
 }
 
 func (app *App) onShutdown() {
