@@ -20,19 +20,21 @@ func (app *App) onStartup() {
 	// Start system-tray icon (network-style, right-click → close)
 	worker.InitTray()
 
-	// Wire check progress to tray tooltip updates
+	// Wire check progress to progress window + tray tooltip
 	check.ProgressCallback = func(phase string, percent int, status string) {
+		worker.SetProgress(percent, status)
 		worker.UpdateProgress(percent, status)
 	}
 }
 
 func (app *App) beforeCheck() {
-	// Update tray tooltip to show detection started
-	worker.UpdateTrayTooltip("SubMill - 节点检测中...")
+	// Show progress bar window before each check
+	worker.ShowProgress("SubMill - 节点检测中...")
 }
 
 func (app *App) afterCheck() {
-	// No window to close; tray stays
+	// Close progress window after check completes
+	worker.CloseProgress()
 }
 
 func (app *App) onMihomoReady() {
@@ -44,6 +46,8 @@ func (app *App) onMihomoReady() {
 			slog.Info("Mihomo is ready, setting proxy")
 			worker.SetSystemProxy()
 			worker.UpdateTrayTooltip("SubMill - 代理已就绪 (127.0.0.1:20171)")
+			// Pop up completion dialog
+			worker.ShowReadyDialog()
 			return
 		}
 		time.Sleep(1 * time.Second)
@@ -59,6 +63,7 @@ func (app *App) onShutdown() {
 		app.mihomo.Stop()
 	}
 	worker.StopTray()
+	worker.CloseProgress()
 	worker.KillResidue()
 	worker.CleanFiles(projectDir())
 }
