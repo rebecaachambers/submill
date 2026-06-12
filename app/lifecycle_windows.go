@@ -14,6 +14,9 @@ func (app *App) onStartup() {
 	slog.Info("=== Windows startup: cleaning residue ===")
 	worker.KillResidue()
 
+	// Clear any stale system proxy from previous crashed session
+	worker.ClearSystemProxy()
+
 	// Start system-tray icon (network-style, right-click → close)
 	worker.InitTray()
 
