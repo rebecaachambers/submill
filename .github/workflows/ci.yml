@@ -44,8 +44,18 @@ jobs:
       - name: Run tests
         run: go test -mod=vendor -v -count=1 ./...
 
-      - name: Upload artifacts
+      - name: Upload artifacts (Windows)
         uses: actions/upload-artifact@v4
         with:
-          name: submill-binaries
-          path: build/
+          name: submill-win
+          path: |
+            build/submill-windows-amd64.exe
+            build/mihomo-windows-amd64.exe
+
+      - name: Upload artifacts (Linux)
+        uses: actions/upload-artifact@v4
+        with:
+          name: submill-linux
+          path: |
+            build/submill-linux-amd64
+            build/mihomo-linux-amd64
