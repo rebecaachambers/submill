@@ -35,7 +35,7 @@ func (app *App) afterCheck() {
 func (app *App) onMihomoReady() {
 	time.Sleep(2 * time.Second)
 	worker.SetSystemProxy()
-	worker.UpdateTrayTooltip("SubMill - 代理已就绪 (127.0.0.1:7890)")
+	worker.UpdateTrayTooltip("SubMill - 代理已就绪 (127.0.0.1:20171)")
 }
 
 func (app *App) onShutdown() {
