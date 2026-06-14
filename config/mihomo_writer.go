@@ -13,6 +13,11 @@ import (
 func WriteMihomoConfig() error {
 	path := filepath.Join(getExecutableDir(), "config", "config.yaml")
 
+	// Don't overwrite existing config
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	}
+
 	cfg := map[string]any{
 		"mixed-port": 20171,
 		"bind-address": "*",
