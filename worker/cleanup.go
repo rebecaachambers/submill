@@ -1,11 +1,10 @@
-﻿package worker
+package worker
 
 import (
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
-	"syscall"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -30,7 +29,7 @@ func killByName(name string) {
 	switch runtime.GOOS {
 	case "windows":
 		cmd = exec.Command("taskkill", "/F", "/IM", name, "/T")
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		cmd.SysProcAttr = hideWindowSysProcAttr()
 	default:
 		cmd = exec.Command("pkill", "-f", name)
 	}
@@ -77,3 +76,4 @@ func CleanFiles(projectDir string) {
 		}
 	}
 }
+

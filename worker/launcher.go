@@ -1,4 +1,4 @@
-package worker
+﻿package worker
 
 import (
 	"io"
@@ -14,13 +14,14 @@ import (
 // Launcher manages the Mihomo subprocess lifecycle.
 // On Windows, Mihomo runs hidden (no console popup).
 type Launcher struct {
-	binPath   string
-	configDir string
-	logFile   string
-	cmd       *exec.Cmd
-	mu        sync.Mutex
-	running   bool
-	started   chan struct{} // closed when Mihomo is first launched
+	binPath    string
+	configDir  string
+	projectDir string
+	logFile    string
+	cmd        *exec.Cmd
+	mu         sync.Mutex
+	running    bool
+	started    chan struct{} // closed when Mihomo is first launched
 }
 
 // NewLauncher creates a Mihomo process launcher.
@@ -30,10 +31,11 @@ func NewLauncher(projectDir string) *Launcher {
 		binName = "mihomo.exe"
 	}
 	return &Launcher{
-		binPath:   filepath.Join(projectDir, binName),
-		configDir: filepath.Join(projectDir, "config"),
-		logFile:   filepath.Join(projectDir, "mihomo.log"),
-		started:   make(chan struct{}),
+		binPath:    filepath.Join(projectDir, binName),
+		configDir:  filepath.Join(projectDir, "config"),
+		projectDir: projectDir,
+		logFile:    filepath.Join(projectDir, "mihomo.log"),
+		started:    make(chan struct{}),
 	}
 }
 
@@ -52,12 +54,15 @@ func (l *Launcher) StartOnce() bool {
 		return false
 	}
 
-	nodesDir := filepath.Join(filepath.Dir(l.binPath), "mihomo", "nodes")
+	// Ensure nodes directory: mihomo/nodes/
+	nodesDir := filepath.Join(l.projectDir, "mihomo", "nodes")
 	os.MkdirAll(nodesDir, 0755)
 
-	// Windows: ensure nodes junction so Mihomo can find nodes within config/
+	// Ensure mihomo can find nodes via config/nodes -> mihomo/nodes link
 	if runtime.GOOS == "windows" {
-		EnsureNodesJunction(filepath.Dir(l.binPath))
+		EnsureNodesJunction(l.projectDir)
+	} else {
+		ensureNodesSymlink(l.projectDir)
 	}
 
 	l.cmd = exec.Command(l.binPath, "-d", l.configDir)

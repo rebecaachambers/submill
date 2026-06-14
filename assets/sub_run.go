@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"syscall"
 	"strings"
 	"time"
 
@@ -170,7 +169,7 @@ func startSubStore() error {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SUB_STORE_PUSH_SERVICE=%s", config.GlobalConfig.SubStorePushService))
 	}
 
-	if runtime.GOOS == "windows" { cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} }; if err := cmd.Start(); err != nil {
+	setPlatformSysProcAttr(cmd); if err := cmd.Start(); err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
 
@@ -290,3 +289,5 @@ func killProcess(pid int32) error {
 	}
 	return nil
 }
+
+

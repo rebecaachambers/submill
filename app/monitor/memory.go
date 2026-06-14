@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"syscall"
 	"runtime"
 	"strings"
 	"time"
@@ -15,7 +14,7 @@ import (
 
 // StartMemoryMonitor 启动内存监控
 func StartMemoryMonitor() {
-	// mihomo的内存问题解决不了，所以加个内存限制自动重启
+	// mihomo的内存问题解决不了，所以加个内存限制自动重�?
 	// 解决了，暂时保留逻辑
 	if limit := os.Getenv("SUB_CHECK_MEM_LIMIT"); limit != "" {
 		memoryLimit, err := human.FromHumanSize(limit)
@@ -76,7 +75,7 @@ func StartMemoryMonitor() {
 	}
 }
 
-// checkMemory 检查内存使用情况
+// checkMemory 检查内存使用情�?
 func checkMemory(memoryLimit uint64) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -97,31 +96,31 @@ func checkMemory(memoryLimit uint64) {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Start() // 让新进程启动
-			slog.Warn("因为内存问题启动了新进程，二进制用户如果需要关闭请关闭此窗口/终端")
+			slog.Warn("因为内存问题启动了新进程，二进制用户如果需要关闭请关闭此窗�?终端")
 		}
 
-		// 退出当前进程
+		// 退出当前进�?
 		os.Exit(1)
 	}
 }
 
-// getSelfCommand 获取当前程序路径和参数
+// getSelfCommand 获取当前程序路径和参�?
 func getSelfCommand() *exec.Cmd {
 	exePath, err := os.Executable()
 	if err != nil {
-		slog.Error("获取可执行文件路径失败:", "error", err)
+		slog.Error("获取可执行文件路径失�?", "error", err)
 		return nil
 	}
 	args := os.Args[1:] // 获取参数（不包括程序名）
 	slog.Warn("🔄 进程即将重启...", "path", exePath, "args", args)
 		cmd := exec.Command(exePath, args...)
 	if runtime.GOOS == "windows" {
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		cmd.SysProcAttr = hideWindowSysProcAttr()
 	}
 	return cmd
 }
 
-// formatBytes 将字节数格式化为人类可读的形式
+// formatBytes 将字节数格式化为人类可读的形�?
 func formatBytes(bytes uint64) string {
 	const unit = 1024
 	if bytes < unit {
@@ -134,3 +133,4 @@ func formatBytes(bytes uint64) string {
 	}
 	return fmt.Sprintf("%.2f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
+

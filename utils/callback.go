@@ -1,4 +1,4 @@
-package utils
+﻿package utils
 
 import (
 	"fmt"
@@ -7,35 +7,34 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"syscall"
 	"strings"
 
 	"github.com/rebecaachambers/submill/config"
 )
 
-// ExecuteCallback 执行回调脚本
+// ExecuteCallback 鎵ц鍥炶皟鑴氭湰
 func ExecuteCallback(successCount int) {
 	callbackScript := config.GlobalConfig.CallbackScript
 	if callbackScript == "" {
 		return
 	}
 
-	slog.Info(fmt.Sprintf("执行回调脚本: %s", callbackScript))
+	slog.Info(fmt.Sprintf("鎵ц鍥炶皟鑴氭湰: %s", callbackScript))
 
-	// 检查脚本文件是否存在
+	// 妫€鏌ヨ剼鏈枃浠舵槸鍚﹀瓨锟?
 	if _, err := os.Stat(callbackScript); os.IsNotExist(err) {
-		slog.Error(fmt.Sprintf("回调脚本不存在: %s", callbackScript))
+		slog.Error(fmt.Sprintf("鍥炶皟鑴氭湰涓嶅瓨锟? %s", callbackScript))
 		return
 	}
 
-	// 在非Windows系统上检查并设置执行权限
+	// 鍦ㄩ潪Windows绯荤粺涓婃鏌ュ苟璁剧疆鎵ц鏉冮檺
 	if runtime.GOOS != "windows" {
-		err := os.Chmod(callbackScript, 0755) // rwxr-xr-x 权限
+		err := os.Chmod(callbackScript, 0755) // rwxr-xr-x 鏉冮檺
 		if err != nil {
-			slog.Warn(fmt.Sprintf("设置脚本执行权限失败: %v", err))
+			slog.Warn(fmt.Sprintf("璁剧疆鑴氭湰鎵ц鏉冮檺澶辫触: %v", err))
 		}
 
-		// 检查脚本是否有shebang
+		// 妫€鏌ヨ剼鏈槸鍚︽湁shebang
 		content, err := os.ReadFile(callbackScript)
 		if err == nil && len(content) > 0 {
 			hasShebang := false
@@ -44,52 +43,53 @@ func ExecuteCallback(successCount int) {
 			}
 
 			if !hasShebang {
-				slog.Warn("脚本缺少shebang行，请在脚本开头添加对应的：#!/bin/bash、#!/bin/sh、#!/usr/bin/env bash 等")
+				slog.Warn("script missing shebang, please add #!/bin/bash or similar at beginning")
 			}
 		}
 	}
 
-	// 根据操作系统类型选择不同的执行方式
+	// 鏍规嵁鎿嶄綔绯荤粺绫诲瀷閫夋嫨涓嶅悓鐨勬墽琛屾柟锟?
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		// Windows 系统
+		// Windows 绯荤粺
 		if strings.HasSuffix(strings.ToLower(callbackScript), ".bat") ||
 			strings.HasSuffix(strings.ToLower(callbackScript), ".cmd") {
-			// 使用完整路径，并正确处理带空格的路径
+			// 浣跨敤瀹屾暣璺緞锛屽苟姝ｇ‘澶勭悊甯︾┖鏍肩殑璺緞
 			absPath, err := filepath.Abs(callbackScript)
 			if err != nil {
-				slog.Error(fmt.Sprintf("获取脚本绝对路径失败: %v", err))
+				slog.Error(fmt.Sprintf("鑾峰彇鑴氭湰缁濆璺緞澶辫触: %v", err))
 				return
 			}
 			cmd = exec.Command("cmd", "/C", absPath)
 		} else if strings.HasSuffix(strings.ToLower(callbackScript), ".ps1") {
-			// PowerShell 脚本
+			// PowerShell 鑴氭湰
 			absPath, err := filepath.Abs(callbackScript)
 			if err != nil {
-				slog.Error(fmt.Sprintf("获取脚本绝对路径失败: %v", err))
+				slog.Error(fmt.Sprintf("鑾峰彇鑴氭湰缁濆璺緞澶辫触: %v", err))
 				return
 			}
-			// 使用 -ExecutionPolicy Bypass 绕过执行策略限制
+			// 浣跨敤 -ExecutionPolicy Bypass 缁曡繃鎵ц绛栫暐闄愬埗
 			cmd = exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", absPath)
 		} else {
 			cmd = exec.Command(callbackScript)
 		}
-		// 设置工作目录为脚本所在目录
+		// 璁剧疆宸ヤ綔鐩綍涓鸿剼鏈墍鍦ㄧ洰锟?
 		cmd.Dir = filepath.Dir(callbackScript)
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		cmd.SysProcAttr = hideWindowSysProcAttr()
 	} else {
-		// Unix/Linux/MacOS 系统
+		// Unix/Linux/MacOS 绯荤粺
 		cmd = exec.Command(callbackScript)
 	}
 
-	// 设置环境变量，传递成功节点数量
+	// 璁剧疆鐜鍙橀噺锛屼紶閫掓垚鍔熻妭鐐规暟锟?
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SUCCESS_COUNT=%d", successCount))
 
-	// 执行命令
+	// 鎵ц鍛戒护
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error(fmt.Sprintf("执行回调脚本失败: %v, 输出: %s", err, string(output)))
+		slog.Error(fmt.Sprintf("鎵ц鍥炶皟鑴氭湰澶辫触: %v, 杈撳嚭: %s", err, string(output)))
 		return
 	}
-	slog.Info("回调脚本执行成功")
+	slog.Info("鍥炶皟鑴氭湰鎵ц鎴愬姛")
 }
+

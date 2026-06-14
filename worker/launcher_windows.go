@@ -1,4 +1,4 @@
-//go:build windows
+﻿//go:build windows
 
 package worker
 
@@ -39,3 +39,6 @@ func EnsureNodesJunction(projectDir string) {
 		slog.Info("Nodes junction created", "junction", junctionPath, "target", targetPath)
 	}
 }
+
+// ensureNodesSymlink is Linux-only; no-op on Windows.
+func ensureNodesSymlink(_ string) {}
