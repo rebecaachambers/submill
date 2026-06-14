@@ -25,7 +25,7 @@ type Launcher struct {
 
 // NewLauncher creates a Mihomo process launcher.
 func NewLauncher(projectDir string) *Launcher {
-	binName := "mihomo"
+	binName := "mihomo/mihomo"
 	if runtime.GOOS == "windows" {
 		binName = "mihomo.exe"
 	}
